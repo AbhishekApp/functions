@@ -89,7 +89,7 @@ admin.initializeApp(functions.config().firebase);
 		
 		var diff = timestamp.getTime() - lastTweetTime.getTime();
 		console.log("Tweet Time Difference : "+diff);
-		if(diff > 15 * 1000){
+		if(diff > 7 * 1000){
 			var client = new Twitter({
 			  consumer_key: 'PITblWnQiqfhIaRZJ4mPHVN1Y',
 			  consumer_secret: 'mOT5zTQCKXK9YuIFkTH2BxWnwIgAT65z6JrFlUwDVcmUu5jhmj',
@@ -97,7 +97,7 @@ admin.initializeApp(functions.config().firebase);
 			  access_token_secret: 'NrItyYw62qGofpNLAeIy8ZEFsObDcSPj0UcEJPf9xGN0P'
 			});
 
-			client.get('search/tweets', {q: eventTitle, result_type:'recent', count:'1'}, function(error, tweets, response) {
+			client.get('search/tweets', {q: eventTitle, result_type:'recent', count:'3'}, function(error, tweets, response) {
 				console.log("Tweet Response : "+JSON.stringify(response));
 				if(error) throw error;
 				if (!error){
@@ -107,23 +107,23 @@ admin.initializeApp(functions.config().firebase);
 					   console.log(tweets.statuses[index].text);
 					   var tweetTxt = tweets.statuses[index].text;
 					   var twt = [];
-				   if(tweetTxt.indexOf("https://t.co")!=-1){
-					 twt = tweetTxt.split("https://t.co");   
-				   }else{
-					   twt[0] = tweetTxt;
-				   }
-				   if(twt[0].indexOf("https:…")!=-1){
-					   twt[0] = twt[0].replace(/https:…/g,"");
-				   }
-				    if(twt[0].indexOf("RT")!=-1){
-					   twt[0] = twt[0].replace("RT","");
-				   }
-				    if(twt[0].indexOf("#")!=-1){
-					   twt[0] = twt[0].replace(/#/g,"");
-				   }
-				    if(twt[0].indexOf("@")!=-1){
-					   twt[0] = twt[0].replace(/@/g,"");
-				   }
+					   if(tweetTxt.indexOf("https://t.co")!=-1){
+	-					 twt = tweetTxt.split("https://t.co");   
+	-				   }else{
+	-					   twt[0] = tweetTxt;
+	-				   }
+	-				   if(twt[0].indexOf("https:…")!=-1){
+	-					   twt[0] = twt[0].replace(/https:…/g,"");
+	-				   }
+	-				    if(twt[0].indexOf("RT")!=-1){
+	-					   twt[0] = twt[0].replace("RT","");
+	-				   }
+	-				    if(twt[0].indexOf("#")!=-1){
+	-					   twt[0] = twt[0].replace(/#/g,"");
+	-				   }
+	-				    if(twt[0].indexOf("@")!=-1){
+	-					   twt[0] = twt[0].replace(/@/g,"");
+	-				   }
 					   
 					   console.log("Tweets : "+twt[0]);
 					   i++;

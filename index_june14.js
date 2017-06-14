@@ -43,7 +43,7 @@ admin.initializeApp(functions.config().firebase);
 			}
 			
 			predictionHistory.set(myPredict).then(snapshot => {
-				console.log("predictionHistory History Created.");
+				console.error("predictionHistory History Created.");
 			}).catch(error => { console.error("predictionHistory History Updated Failed : "+error); });
 		}
 		
@@ -84,12 +84,10 @@ admin.initializeApp(functions.config().firebase);
 		var timestamp = new Date(getTodayDate());
 		var tweetRef = admin.database().ref(chatPath);
 		var lastTweetTime = new Date(tweetHandleTime);
-		console.log("Tweet Last Tweeted Time : "+lastTweetTime.getTime());
-		console.log("Tweet New timestamp : "+timestamp.getTime());
 		
 		var diff = timestamp.getTime() - lastTweetTime.getTime();
-		console.log("Tweet Time Difference : "+diff);
-		if(diff > 15 * 1000){
+		console.log("Time Difference : "+diff);
+		if(diff > 3 * 1000){
 			var client = new Twitter({
 			  consumer_key: 'PITblWnQiqfhIaRZJ4mPHVN1Y',
 			  consumer_secret: 'mOT5zTQCKXK9YuIFkTH2BxWnwIgAT65z6JrFlUwDVcmUu5jhmj',
@@ -99,14 +97,14 @@ admin.initializeApp(functions.config().firebase);
 
 			client.get('search/tweets', {q: eventTitle, result_type:'recent', count:'1'}, function(error, tweets, response) {
 				console.log("Tweet Response : "+JSON.stringify(response));
-				if(error) throw error;
-				if (!error){
-				   console.log("Tweets Length : "+tweets.statuses.length);
-				   var i = 0;
-				   tweets.statuses.forEach(function tweetFunction(item, index){
-					   console.log(tweets.statuses[index].text);
-					   var tweetTxt = tweets.statuses[index].text;
-					   var twt = [];
+			 if(error) throw error;
+			 if (!error){
+			   console.log("Tweets Length : "+tweets.statuses.length);
+			   var i = 0;
+			   tweets.statuses.forEach(function tweetFunction(item, index){
+				   console.log(tweets.statuses[index].text);
+				   var tweetTxt = tweets.statuses[index].text;
+				   var twt = [];
 				   if(tweetTxt.indexOf("https://t.co")!=-1){
 					 twt = tweetTxt.split("https://t.co");   
 				   }else{
@@ -124,45 +122,44 @@ admin.initializeApp(functions.config().firebase);
 				    if(twt[0].indexOf("@")!=-1){
 					   twt[0] = twt[0].replace(/@/g,"");
 				   }
-					   
-					   console.log("Tweets : "+twt[0]);
-					   i++;
-					   
-					   var newMsg = {
-									  "author" : "",
-									  "authorType" : "user",
-									  "messageType" : "feed",
-									  "timestamp" : timestamp,
-									  "title" : twt[0],
-									  "toUser" : ""
-									};
-					   tweetRef.push().set(newMsg).then(metasnapshot => {
-														console.log("Tweet Push Successfully NEW TIME : "+updateTime);
-														tweet["lastTweetUpdate"] = updateTime;
-														tweetRule.update(tweet);
-												   }).catch(error => {console.log("Tweet Push ERROR: "+error);});  ;
-					   
-				   });
-				   console.log("Total Length : "+i);
-				}
-				  
+				   
+				   console.log("Tweets : "+twt[0]);
+				   i++;
+				   
+				   var newMsg = {
+								  "author" : "",
+								  "authorType" : "user",
+								  "messageType" : "feed",
+								  "timestamp" : timestamp,
+								  "title" : twt[0],
+								  "toUser" : ""
+								};
+				   tweetRef.push().set(newMsg).then(metasnapshot => {
+													console.log("Tweet Push Successfully");
+											   }).catch(error => {console.log("Tweet Push ERROR: "+error);});  ;
+				   
+			   });
+			   console.log("Total Length : "+i);
+			 }
+			  
 			});
-			
+			console.log("Tweet NEW TIME : "+updateTime);
+			tweet["lastTweetUpdate"] = updateTime;
+			tweetRule.update(tweet);
 		}
 		
-	/*
-		var day = currentTime.getDate();
+	/*	var day = currentTime.getDate();
 		var mm = currentTime.getMonth()+1; 
 		var year = currentTime.getFullYear();
 		var hour = currentTime.getHours();
 		var minute = currentTime.getMinutes();
 		var second = currentTime.getSeconds();
 		var newTime = Date(year, mm, day, hour, minute, second, 0);
-	*/
+		*/
 		
 	}
 	
-	exports.twitterResponse = functions.database.ref('/Timeline/{userid}/{matchname}')
+	/*exports.twitterResponse = functions.database.ref('/Timeline/{userid}/{matchname}')
     .onWrite(event => {
 		const node = event.data.val();
 		var chatPath = node.chat_path;
@@ -171,7 +168,7 @@ admin.initializeApp(functions.config().firebase);
 		console.log("Chat Path : "+chatPath);
 		var tweetRef = admin.database().ref(chatPath);
 		twitterHandle(chatPath, eventTitle, updatetime);
-	});
+	});*/
 	
 	exports.noticePrediction = functions.database.ref('/Cricket/{subcate}/{matchname}/{matchid}/StadiumChat/{pushId}')
     .onWrite(event => {
@@ -184,8 +181,10 @@ admin.initializeApp(functions.config().firebase);
 	//	console.log("node author  : "+node.author);
 	//	console.log("node authorType  : "+node.authorType);
 	//	console.log("node title match prediction : "+node.title.indexOf("#prediction"));
-	//	console.log("node title  : "+node.title);
-
+		console.log("node title  : "+node.title);
+		
+	
+	
 	/*		WonHistory Node Reference		*/
 	var balance = 0;
 	var wonMeta;
@@ -202,21 +201,21 @@ admin.initializeApp(functions.config().firebase);
 			//	console.log("niceMsgChar Limit : "+niceMsgChar);
 				if((node.authorType == "user" || node.authorType == "")  && node.title.length >= niceMsgChar && node.messageType=="normal"){
 					balance = balance + niceMsgWon;
-				//	console.log("Nice Message Characters : "+node.title.length);
+					console.log("Nice Message Characters : "+node.title.length);
 					
 					const metWon = {"desc":"Nice message. We have added "+niceMsgWon+" WONs. Your balance : "+balance+" WONs", "earned": niceMsgWon ,"burned":0,"timeStamp":	node.timestamp};
 					const newWonUser = {"balance": balance,	"Meta": wonMeta};
 					var wonRef = admin.database().ref('/WonHistory/'+node.toUser);
 					wonRef.set(newWonUser).then(snapshot => {
-					//		 console.log("Won History Updated ");
+					//		 console.error("Won History Updated ");
 					}).catch(error => { console.error("Won History Updated Failed : "+error); });
 							
 					admin.database().ref('/WonHistory/'+node.toUser+"/Meta/").push().set(metWon).then(snapshot => {
-						//	console.log("Nice message Won Meta Updated Successfully");
+							console.log("Nice message Won Meta Updated Successfully");
 					}).catch(error => {console.log("WonHistory meta updated ERROR: "+error);});
 					
 				}
-				if((node.authorType == "user" || node.authorType == "")  && (node.messageType=="normal" || node.messageType=="canned")){
+				if((node.authorType == "user" || node.authorType == "") && (node.messageType=="normal" || node.messageType=="canned")){
 						var chatPath = '/Cricket/'+event.params.subcate+'/'+event.params.matchname+'/'+event.params.matchid+'/StadiumChat/';
 						var twitterQuery = node.title + event.params.subcate;
 						twitterHandle(chatPath, twitterQuery, node.timestamp);
@@ -236,13 +235,12 @@ admin.initializeApp(functions.config().firebase);
 				
 			var flagPrediction = false;	
 			var resultFlag = true;
-			var sameVoteFlag = false;
 			const newMsg = {
 							  "author" : "admin",
 							  "authorType" : "com",
 							  "messageType" : "normal",
 							  "timestamp" : node.timestamp,
-							  "title" : "Thanks & Noted! 10 WONs consumed, you win 50 if your team wins. Start Chatting Now as it happens :",
+							  "title" : "Thanks & Noted! 10 WONs consumed, you win 100 if your team wins. Start Chatting Now as it happens :)",
 							  "toUser" : node.toUser
 							};
 							
@@ -250,29 +248,26 @@ admin.initializeApp(functions.config().firebase);
 				
 		predictionHistory.once("value", function(PredictionSnapshot){
 					predictionValue = PredictionSnapshot.val();
-			//		console.log("predictionValue[userPrediction] : "+predictionValue[userPrediction]);
-			//		console.log("predictionValue[result] : "+predictionValue["result"]);
+					console.log("predictionValue[userPrediction] : "+predictionValue[userPrediction]);
+					console.log("predictionValue[result] : "+predictionValue["result"]);
 					if(predictionValue["result"]){
 						resultFlag = false;
-			//			console.log("IF predictionValue[result] : "+predictionValue["result"]);	
+						console.log("IF predictionValue[result] : "+predictionValue["result"]);	
 					}else{
 						resultFlag = true;
-			//			console.log("ELSE True predictionValue[result] : "+predictionValue["result"]);
+						console.log("ELSE True predictionValue[result] : "+predictionValue["result"]);
 						Object.keys(predictionValue).forEach(function(key) {
 						var value = predictionValue[key];
-			//			console.log("Prediction userPrediction : "+userPrediction+" KEY: "+key);
+						console.log("Prediction userPrediction : "+userPrediction+" KEY: "+key);
 						if(key == userPrediction){
 							flagPrediction = true;
-			//				console.log("key == userPrediction flagPrediction: "+flagPrediction);
-							if(value.indexOf(String(node.toUser).trim()) != -1){
-									sameVoteFlag = true;
-								}
+							console.log("key == userPrediction flagPrediction: "+flagPrediction);
 						}
-						if(value.indexOf(String(node.toUser).trim()) != -1 && !sameVoteFlag)
+						if(value.indexOf(String(node.toUser).trim()) != -1)
 						{
 							value = value.replace(new RegExp(String(node.toUser).trim(),"g"), '');
 							value = value.replace(new RegExp(String(",,")), '');
-			//				console.log("Removed Value : "+value);
+							console.log("Removed Value : "+value);
 							predictionValue[key] = value;
 						}
 					});
@@ -283,8 +278,8 @@ admin.initializeApp(functions.config().firebase);
 					console.log("Prediction ERROR : "+error);
 				});
 				*/
-	//	console.log("resultFlag : "+resultFlag);
-	//	console.log("flagPrediction : "+flagPrediction);
+		console.log("resultFlag : "+resultFlag);
+		console.log("flagPrediction : "+flagPrediction);
 		if(!resultFlag){
 			const newResMsg = {
 							  "author" : "admin",
@@ -306,17 +301,6 @@ admin.initializeApp(functions.config().firebase);
 							  "toUser" : node.toUser
 							};
 		admin.database().ref('/Cricket/'+event.params.subcate+'/'+event.params.matchname+'/'+event.params.matchid+'/StadiumChat/').push(newTryMsg);
-		}
-		else if(sameVoteFlag){
-			const newTryMsg = {
-							  "author" : "admin",
-							  "authorType" : "com",
-							  "messageType" : "normal",
-							  "timestamp" : node.timestamp,
-							  "title" : "You had made this Prediction before, we have it Noted. Go ahead and Chat Now as it happens",
-							  "toUser" : node.toUser
-							};
-		admin.database().ref('/Cricket/'+event.params.subcate+'/'+event.params.matchname+'/'+event.params.matchid+'/StadiumChat/').push(newTryMsg);
 		}else{
 			admin.database().ref('/Cricket/'+event.params.subcate+'/'+event.params.matchname+'/'+event.params.matchid+'/StadiumChat/').push(newMsg).then(snapshot => {
 				
@@ -329,39 +313,39 @@ admin.initializeApp(functions.config().firebase);
 			
 							
 				balance = balance - predictionBurnWon;
-	//			console.log("Won Meta : "+JSON.stringify(wonMeta));
+				console.log("Won Meta : "+JSON.stringify(wonMeta));
 				
 				const metaWon = {"desc":"Prediction noted and "+predictionBurnWon+" Won's consumed. Your balance : "+balance+" Won", "earned": 0 ,"burned":predictionBurnWon,"timeStamp":	node.timestamp};
 				const newWonUser = {"balance": balance,
 									"Meta": wonMeta};
 				var wonRef = admin.database().ref('/WonHistory/'+node.toUser);
 				wonRef.set(newWonUser).then(snapshot => {
-					 console.log(" Won History Updated "+newWonUser);
+					 console.error(" Won History Updated "+newWonUser);
 				}).catch(error => { console.error("Won History Updated Failed : "+error); });
 				
 				admin.database().ref('/WonHistory/'+node.toUser+"/Meta/").push().set(metaWon).then(snapshot => {
-	//				console.log("Won Meta Updated Successfully");
+					console.log("Won Meta Updated Successfully");
 				}).catch(error => {console.log("WonHistory meta updated ERROR: "+error);});
 				wonRef.off("value");
 			}).catch(error => {
-    //            console.error("Noted Failed : "+error);
+                console.error("Noted Failed : "+error);
 			});
 		}
 		}, function(error){
-	//				console.log("Prediction ERROR : "+error);
+					console.log("Prediction ERROR : "+error);
 		});
 		}
 		
 		
-	/*  	Commentator Notifier Result	and Earn	*/
-	//		console.log("Notifier RESULT Execution");
+		/*  	Commentator Notifier Result	and Earn	*/
+		console.log("Notifier RESULT Execution");
 		if(node.authorType == "com" && node.title.indexOf("#notifier") != -1 && node.title.indexOf("#result") != -1 && (node.toUser.indexOf("24ca4a7b5d5dd0ef") != -1 || node.toUser.indexOf("850f0ea660de946e") != -1)){
 			
 	//		var userPrediction = node.title.replace("#notifier", "").trim();
 	//		userPrediction = userPrediction.replace("#result", "").trim();
 			var userPrediction = node.title.split("#result");
-	//		console.log("User Result : "+userPrediction);
-	//		console.log("User Result : "+userPrediction[1].trim());
+			console.log("User Result : "+userPrediction);
+			console.log("User Result : "+userPrediction[1].trim());
 			var userList = new Array();
 			predictionHistory.once("value", function(PredictionSnapshot){
 					predictionValue = PredictionSnapshot.val();
@@ -370,8 +354,8 @@ admin.initializeApp(functions.config().firebase);
 					
 					predictionHistory.update(predictionValue).then(snapshot => {
 						
-	//					console.log("Predicted Result Set : "+JSON.stringify(predictionValue));	
-	//					console.log("userList.length : "+userList.length);
+						console.log("Predicted Result Set : "+JSON.stringify(predictionValue));	
+						console.log("userList.length : "+userList.length);
 						predictionHistory.off("value");
 					/*	for(var i = 1; i < userList.length; i++){
 						//	var wonUserList = admin.database().ref('/WonHistory/'+userList[i]);
@@ -422,19 +406,20 @@ admin.initializeApp(functions.config().firebase);
 		/*		Engagement Node Reference 		*/
 
 		var result = node.result;
-	//	console.log("Result "+result);
-	//	console.log("Users "+node[result]);
+		console.log("Result "+result);
+		console.log("Users "+node[result]);
 		userlist = node[result].split(",");
-	//	console.log("userlist : "+userlist);
+		console.log("userlist : "+userlist);
 		if(result){
 			
 			userlist.forEach(function myFunction(item, i) {
 			
+	
 				if(userlist[i]){
 					var wonUserList = admin.database().ref('/WonHistory/'+userlist[i]);
 					var wonMetaRef = admin.database().ref('/WonHistory/'+userlist[i]+'/Meta/');
 					var wonbalance=0;
-	//				console.log("Abhi WonUserList");
+					console.log("Abhi WonUserList");
 					wonUserList.once("value",  function(wonSnapShot){
 										var wonJson = wonSnapShot.val();
 										var parsWon = JSON.parse(JSON.stringify(wonJson));
@@ -451,13 +436,13 @@ admin.initializeApp(functions.config().firebase);
 											"burned":0,
 											"timeStamp": ""+newDate
 											};
-	//										console.log("i= "+i);
+											console.log("i= "+i);
 											wonUserList.set(wonNewUser).then(wonsnap => {
-	//												console.log("Won History Updated ");
+													console.log("Won History Updated ");
 											}).catch(error => { console.log("Won History Updated Failed : "+error); });	
 									
 										wonMetaRef.push().set(metaWon).then(metasnapshot => {
-	//												console.log("Won Meta Updated Successfully");
+													console.log("Won Meta Updated Successfully");
 										}).catch(error => {console.log("WonHistory meta updated ERROR: "+error);});  
 					});
 				}
@@ -499,8 +484,8 @@ admin.initializeApp(functions.config().firebase);
 			year = year + 1;
 			mm = mm -12;
 		}
-	//	var newDate = new Date(year, mm, day, hour, minute, second, 0);
-	//	2017-05-04 22:13:36
+		//var newDate = new Date(year, mm, day, hour, minute, second, 0);
+		//2017-05-04 22:13:36
 		var newDate = year+"-"+mm+"-"+day+" "+hour+":"+minute+":"+second;
 		return newDate;
 	}
@@ -511,9 +496,10 @@ exports.commentatorNotifier = functions.database.ref('/commentator_notifier/{pus
     .onWrite(event => {
         // Grab the current value of what was written to the Realtime Database.
 		var eventList = ['match1_stad', 'match2_stad', 'match_stad', 'test1_stad', 'test1_hp', 'test167_stad', 'testr137' ];
-		const node = event.data.val();
 		
-    //    console.log('Notify', event.params.pushId, node.title);
+        const node = event.data.val();
+		
+        console.log('Notify', event.params.pushId, node.title);
 		
 		 const payload = {
                 notification: {
@@ -537,7 +523,7 @@ exports.commentatorNotifier = functions.database.ref('/commentator_notifier/{pus
 				}
 			}
 			
-	//		console.log("sent message condition "+condition);
+			console.log("sent message condition "+condition);
 			return admin.messaging().sendToCondition(condition, payload)
 					  .then(function(response) {
 						console.log("Success Response : "+response);
